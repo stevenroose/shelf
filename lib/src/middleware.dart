@@ -55,7 +55,7 @@ Middleware createMiddleware({requestHandler(Request request),
 
   return (Handler innerHandler) {
     return (request) async {
-      var response = requestHandler(request);
+      var response = await requestHandler(request);
       if (response != null) return response;
 
       try {
@@ -65,6 +65,7 @@ Middleware createMiddleware({requestHandler(Request request),
           if (error is HijackException) throw error;
           return errorHandler(error, stackTrace);
         }
+        throw error;
       }
       return responseHandler(response);
     };
