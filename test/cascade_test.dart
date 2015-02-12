@@ -5,7 +5,6 @@
 library shelf.cascade_test;
 
 import 'package:shelf/shelf.dart';
-import 'package:shelf/src/util.dart';
 import 'package:unittest/unittest.dart';
 
 import 'test_util.dart';
@@ -44,10 +43,9 @@ void main() {
 
     test("the second response should be returned if it matches and the first "
         "doesn't", () {
-      return syncFuture(() {
-        return handler(
-            new Request('GET', LOCALHOST_URI, headers: {'one': 'false'}));
-      }).then((response) {
+      return handler(
+          new Request('GET', LOCALHOST_URI, headers: {'one': 'false'})).then(
+          (response) {
         expect(response.statusCode, equals(200));
         expect(response.readAsString(), completion(equals('handler 2')));
       });
@@ -55,20 +53,20 @@ void main() {
 
     test("the third response should be returned if it matches and the first "
         "two don't", () {
-      return syncFuture(() {
-        return handler(new Request('GET', LOCALHOST_URI,
-            headers: {'one': 'false', 'two': 'false'}));
-      }).then((response) {
+      return handler(new Request('GET', LOCALHOST_URI,
+          headers: {'one': 'false', 'two': 'false'})).then((response) {
         expect(response.statusCode, equals(200));
         expect(response.readAsString(), completion(equals('handler 3')));
       });
     });
 
     test("the third response should be returned if no response matches", () {
-      return syncFuture(() {
-        return handler(new Request('GET', LOCALHOST_URI,
-            headers: {'one': 'false', 'two': 'false', 'three': 'false'}));
-      }).then((response) {
+      return handler(new Request('GET', LOCALHOST_URI,
+          headers: {
+        'one': 'false',
+        'two': 'false',
+        'three': 'false'
+      })).then((response) {
         expect(response.statusCode, equals(404));
         expect(response.readAsString(), completion(equals('handler 3')));
       });
@@ -78,8 +76,7 @@ void main() {
   test('a 404 response triggers a cascade by default', () {
     var handler = new Cascade()
         .add((_) => new Response.notFound('handler 1'))
-        .add((_) => new Response.ok('handler 2'))
-        .handler;
+        .add((_) => new Response.ok('handler 2')).handler;
 
     return makeSimpleRequest(handler).then((response) {
       expect(response.statusCode, equals(200));
@@ -90,8 +87,7 @@ void main() {
   test('a 405 response triggers a cascade by default', () {
     var handler = new Cascade()
         .add((_) => new Response(405))
-        .add((_) => new Response.ok('handler 2'))
-        .handler;
+        .add((_) => new Response.ok('handler 2')).handler;
 
     return makeSimpleRequest(handler).then((response) {
       expect(response.statusCode, equals(200));
@@ -104,8 +100,7 @@ void main() {
         .add((_) => new Response.found('/'))
         .add((_) => new Response.forbidden('handler 2'))
         .add((_) => new Response.notFound('handler 3'))
-        .add((_) => new Response.ok('handler 4'))
-        .handler;
+        .add((_) => new Response.ok('handler 4')).handler;
 
     return makeSimpleRequest(handler).then((response) {
       expect(response.statusCode, equals(404));
@@ -119,8 +114,7 @@ void main() {
         .add((_) => new Response.movedPermanently('/'))
         .add((_) => new Response.forbidden('handler 2'))
         .add((_) => new Response.notFound('handler 3'))
-        .add((_) => new Response.ok('handler 4'))
-        .handler;
+        .add((_) => new Response.ok('handler 4')).handler;
 
     return makeSimpleRequest(handler).then((response) {
       expect(response.statusCode, equals(404));

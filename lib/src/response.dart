@@ -54,9 +54,9 @@ class Response extends Message {
   /// in [headers] will be set appropriately. If there is no existing
   /// Content-Type header, it will be set to "application/octet-stream".
   Response.ok(body, {Map<String, String> headers, Encoding encoding,
-    Map<String, Object> context})
-      : this(200, body: body, headers: headers, encoding: encoding,
-          context: context);
+      Map<String, Object> context})
+      : this(200,
+          body: body, headers: headers, encoding: encoding, context: context);
 
   /// Constructs a 301 Moved Permanently response.
   ///
@@ -119,13 +119,12 @@ class Response extends Message {
   /// Constructs a helper constructor for redirect responses.
   Response._redirect(int statusCode, location, body,
       Map<String, String> headers, Encoding encoding,
-      { Map<String, Object> context })
+      {Map<String, Object> context})
       : this(statusCode,
-            body: body,
-            encoding: encoding,
-            headers: addHeader(
-                headers, 'location', _locationToString(location)),
-            context: context);
+          body: body,
+          encoding: encoding,
+          headers: addHeader(headers, 'location', _locationToString(location)),
+          context: context);
 
   /// Constructs a 304 Not Modified response.
   ///
@@ -133,11 +132,12 @@ class Response extends Message {
   /// information used to determine whether the requested resource has changed
   /// since the last request. It indicates that the resource has not changed and
   /// the old value should be used.
-  Response.notModified({Map<String, String> headers,
-    Map<String, Object> context})
-      : this(304, headers: addHeader(
-            headers, 'date', formatHttpDate(new DateTime.now())),
-            context: context);
+  Response.notModified(
+      {Map<String, String> headers, Map<String, Object> context})
+      : this(304,
+          headers: addHeader(
+              headers, 'date', formatHttpDate(new DateTime.now())),
+          context: context);
 
   /// Constructs a 403 Forbidden response.
   ///
@@ -151,8 +151,8 @@ class Response extends Message {
   /// If [encoding] is passed, the "encoding" field of the Content-Type header
   /// in [headers] will be set appropriately. If there is no existing
   /// Content-Type header, it will be set to "application/octet-stream".
-  Response.forbidden(body, {Map<String, String> headers,
-      Encoding encoding, Map<String, Object> context})
+  Response.forbidden(body, {Map<String, String> headers, Encoding encoding,
+      Map<String, Object> context})
       : this(403,
           headers: body == null ? _adjustErrorHeaders(headers) : headers,
           body: body == null ? 'Forbidden' : body,
@@ -172,7 +172,7 @@ class Response extends Message {
   /// in [headers] will be set appropriately. If there is no existing
   /// Content-Type header, it will be set to "application/octet-stream".
   Response.notFound(body, {Map<String, String> headers, Encoding encoding,
-    Map<String, Object> context})
+      Map<String, Object> context})
       : this(404,
           headers: body == null ? _adjustErrorHeaders(headers) : headers,
           body: body == null ? 'Not Found' : body,
@@ -194,9 +194,9 @@ class Response extends Message {
   Response.internalServerError({body, Map<String, String> headers,
       Encoding encoding, Map<String, Object> context})
       : this(500,
-            headers: body == null ? _adjustErrorHeaders(headers) : headers,
-            body: body == null ? 'Internal Server Error' : body,
-            context: context);
+          headers: body == null ? _adjustErrorHeaders(headers) : headers,
+          body: body == null ? 'Internal Server Error' : body,
+          context: context);
 
   /// Constructs an HTTP response with the given [statusCode].
   ///
@@ -234,8 +234,8 @@ class Response extends Message {
     headers = updateMap(this.headers, headers);
     context = updateMap(this.context, context);
 
-    return new Response(this.statusCode, body: this.read(), headers: headers,
-        context: context);
+    return new Response(this.statusCode,
+        body: this.read(), headers: headers, context: context);
   }
 }
 
@@ -248,8 +248,8 @@ Map<String, String> _adjustErrorHeaders(Map<String, String> headers) {
     return addHeader(headers, 'content-type', 'text/plain');
   }
 
-  var contentType = new MediaType.parse(headers['content-type'])
-      .change(mimeType: 'text/plain');
+  var contentType = new MediaType.parse(headers['content-type']).change(
+      mimeType: 'text/plain');
   return addHeader(headers, 'content-type', contentType.toString());
 }
 
