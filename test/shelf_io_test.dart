@@ -16,7 +16,27 @@ import 'package:shelf/shelf_io.dart' as shelf_io;
 
 import 'test_util.dart';
 
+const _customErrorBody = 'custom error body';
+
 void main() {
+  var errorType;
+  var error;
+  var stackTrace;
+
+  customErrorLogger(shelf_io.ErrorType errorTypeValue, [errorValue, StackTrace stackTraceValue]) {
+    errorType = errorTypeValue;
+    error = errorValue;
+    stackTrace = stackTraceValue;
+
+    return new Response.internalServerError(body: _customErrorBody);
+  }
+
+  setUp(() {
+    errorType = null;
+    error = null;
+    stackTrace = null;
+  });
+
   test('sync handler returns a value to the client', () {
     _scheduleServer(syncHandler);
 
@@ -53,6 +73,19 @@ void main() {
     });
   });
 
+  test('null response is logged', () {
+    _scheduleServer((request) => null, customErrorLogger);
+
+    return _scheduleGet().then((response) {
+      expect(errorType, shelf_io.ErrorType.nullResponse);
+      expect(error, isNull);
+      expect(stackTrace, isNull);
+
+      expect(response.statusCode, HttpStatus.INTERNAL_SERVER_ERROR);
+      expect(response.body, _customErrorBody);
+    });
+  });
+
   test('thrown error leads to a 500', () {
     _scheduleServer((request) {
       throw new UnsupportedError('test');
@@ -72,6 +105,19 @@ void main() {
     return _scheduleGet().then((response) {
       expect(response.statusCode, HttpStatus.INTERNAL_SERVER_ERROR);
       expect(response.body, 'Internal Server Error');
+    });
+  });
+
+  test('error response is logged', () {
+    _scheduleServer((request) => throw 'test', customErrorLogger);
+
+    return _scheduleGet().then((response) {
+      expect(errorType, shelf_io.ErrorType.errorThrownByHandler);
+      expect(error, 'test');
+      expect(stackTrace, isNotNull);
+
+      expect(response.statusCode, HttpStatus.INTERNAL_SERVER_ERROR);
+      expect(response.body, _customErrorBody);
     });
   });
 
@@ -213,6 +259,7 @@ void main() {
 
     return _scheduleGet().then((response) {
       expect(response.statusCode, HttpStatus.INTERNAL_SERVER_ERROR);
+      expect(response.body, 'Internal Server Error');
     });
   });
 
@@ -248,10 +295,10 @@ void main() {
     });
   });
 
-  test('a bad HTTP request results in a 500 response', () {
+  test('a bad HTTP request results in a logged error', () {
     var socket;
 
-    _scheduleServer(syncHandler);
+    _scheduleServer(syncHandler, customErrorLogger);
 
     schedule(() {
       return Socket.connect('localhost', _serverPort).then((value) {
@@ -272,7 +319,12 @@ void main() {
 
     schedule(() {
       return UTF8.decodeStream(socket).then((value) {
+        expect(errorType, shelf_io.ErrorType.errorParsingRequest);
+        expect(error, new isInstanceOf<ArgumentError>());
+        expect(stackTrace, isNotNull);
+
         expect(value, contains('500 Internal Server Error'));
+        expect(value, contains(_customErrorBody));
       });
     });
   });
@@ -335,8 +387,9 @@ void main() {
 
 int _serverPort;
 
-Future _scheduleServer(Handler handler) {
-  return schedule(() => shelf_io.serve(handler, 'localhost', 0).then((server) {
+Future _scheduleServer(Handler handler, [shelf_io.ErrorHandler errorHandler]) {
+  return schedule(() => shelf_io.serve(handler, 'localhost', 0,
+      errorHandler: errorHandler).then((server) {
     currentSchedule.onComplete.schedule(() {
       _serverPort = null;
       return server.close(force: true);
